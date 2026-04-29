@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CFO-OS · AI-Native CFO Operating System</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#1a1a2e;min-height:100vh}
+
+/* ── NAVBAR ── */
+.navbar{background:#0f172a;padding:0 28px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200}
+.nav-brand{display:flex;align-items:center;gap:10px;color:#fff;font-size:16px;font-weight:800;letter-spacing:-0.3px}
+.brand-badge{background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.brand-sub{font-size:10px;font-weight:400;color:#64748b;letter-spacing:0.05em;text-transform:uppercase}
+.nav-tabs{display:flex;gap:2px}
+.nav-tab{padding:7px 16px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;color:#94a3b8;border:none;background:none;transition:all .15s;font-family:inherit;display:flex;align-items:center;gap:5px}
+.nav-tab:hover{background:#1e293b;color:#e2e8f0}
+.nav-tab.active{background:#6366f1;color:#fff}
+.nav-right{display:flex;align-items:center;gap:10px}
+.agent-live{display:flex;align-items:center;gap:6px;background:#052e16;border:1px solid #166534;border-radius:100px;padding:5px 12px;font-size:11px;color:#4ade80;font-weight:600}
+.pulse{width:6px;height:6px;border-radius:50%;background:#4ade80;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+
+
+/* ── WELCOME OVERLAY ── */
+.welcome-overlay{position:fixed;inset:0;background:rgba(15,23,42,0.85);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.welcome-box{background:#fff;border-radius:20px;padding:44px 40px;max-width:480px;width:90%;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,0.3)}
+.welcome-logo{width:56px;height:56px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 20px}
+.welcome-box h2{font-size:22px;font-weight:800;color:#0f172a;margin-bottom:8px}
+.welcome-box p{font-size:14px;color:#64748b;line-height:1.6;margin-bottom:28px}
+.welcome-options{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.welcome-btn{padding:16px 12px;border-radius:12px;border:2px solid;cursor:pointer;font-family:inherit;transition:all .18s;text-align:left;background:none}
+.welcome-btn:hover{transform:translateY(-2px)}
+.welcome-btn .wb-icon{font-size:28px;margin-bottom:8px;display:block}
+.welcome-btn .wb-title{font-size:14px;font-weight:800;display:block;margin-bottom:3px}
+.welcome-btn .wb-desc{font-size:11px;line-height:1.4;display:block}
+.welcome-btn.demo{background:#f5f3ff;border-color:#c4b5fd;color:#4f46e5}
+.welcome-btn.demo:hover{background:#ede9fe;border-color:#8b5cf6}
+.welcome-btn.fresh{background:#f0fdf4;border-color:#bbf7d0;color:#15803d}
+.welcome-btn.fresh:hover{background:#dcfce7;border-color:#4ade80}
+.data-menu{position:relative}
+.data-menu-btn{padding:6px 12px;background:#1e293b;border:1px solid #334155;border-radius:7px;font-size:12px;font-weight:600;color:#94a3b8;cursor:pointer;font-family:inherit;transition:all .15s;display:flex;align-items:center;gap:5px}
+.data-menu-btn:hover{border-color:#6366f1;color:#a5b4fc}
+.data-dropdown{position:absolute;top:calc(100% + 6px);right:0;background:#1e293b;border:1px solid #334155;border-radius:10px;padding:6px;min-width:190px;box-shadow:0 8px 24px rgba(0,0,0,.4);display:none;z-index:300}
+.data-dropdown.open{display:block}
+.data-dd-item{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;color:#94a3b8;transition:all .15s;border:none;background:none;width:100%;text-align:left;font-family:inherit}
+.data-dd-item:hover{background:#334155;color:#e2e8f0}
+.data-dd-divider{height:1px;background:#334155;margin:4px 0}
+
+/* ── LAYOUT ── */
+.page{display:none;padding:26px 30px;max-width:1280px;margin:0 auto}
+.page.active{display:block}
+.page-header{margin-bottom:22px}
+.page-header h2{font-size:21px;font-weight:800;color:#0f172a}
+.page-header p{font-size:13px;color:#64748b;margin-top:3px}
+
+/* ── STAT CARDS ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.stat-card{background:#fff;border-radius:12px;padding:18px 20px;border:1px solid #e2e8f0;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.stat-card.purple::before{background:linear-gradient(90deg,#6366f1,transparent)}
+.stat-card.green::before{background:linear-gradient(90deg,#10b981,transparent)}
+.stat-card.orange::before{background:linear-gradient(90deg,#f59e0b,transparent)}
+.stat-card.red::before{background:linear-gradient(90deg,#ef4444,transparent)}
+.stat-label{font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px}
+.stat-value{font-size:24px;font-weight:800;line-height:1;margin-bottom:5px}
+.stat-value.purple{color:#6366f1}.stat-value.green{color:#10b981}
+.stat-value.orange{color:#f59e0b}.stat-value.red{color:#ef4444}
+.stat-desc{font-size:11px;color:#94a3b8}
+
+/* ── GRID ── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+.grid-large{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px}
+
+/* ── CARD ── */
+.card{background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:20px}
+.card-title{font-size:14px;font-weight:800;color:#0f172a;margin-bottom:16px;display:flex;align-items:center;gap:7px}
+.card-title span{font-size:16px}
+
+/* ── AGENT PANEL ── */
+.agent-panel{background:#0f172a;border-radius:12px;border:1px solid #1e293b;padding:20px;margin-bottom:16px;position:relative;overflow:hidden}
+.agent-panel::before{content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(99,102,241,.15),transparent);pointer-events:none}
+.agent-panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.agent-panel-title{color:#e2e8f0;font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px}
+.agent-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.agent-card{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:14px;transition:border-color .2s}
+.agent-card:hover{border-color:#6366f1}
+.agent-card.running{border-color:#6366f1;background:#1e1b4b}
+.agent-icon{font-size:22px;margin-bottom:8px}
+.agent-name{font-size:12px;font-weight:700;color:#e2e8f0;margin-bottom:4px}
+.agent-status{font-size:11px;color:#64748b;line-height:1.4}
+.agent-status.active{color:#a5b4fc}
+.agent-status.done{color:#4ade80}
+.agent-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:2px 8px;border-radius:100px;font-weight:600;margin-top:6px}
+.agent-badge.running{background:rgba(99,102,241,.2);color:#a5b4fc}
+.agent-badge.done{background:rgba(74,222,128,.15);color:#4ade80}
+.agent-badge.idle{background:#1e293b;color:#475569}
+.agent-log{margin-top:12px;background:#020617;border-radius:8px;padding:12px;font-size:11px;font-family:'Courier New',monospace;color:#94a3b8;max-height:80px;overflow:hidden}
+.agent-log-line{margin-bottom:3px}
+.agent-log-line .ts{color:#334155}
+.agent-log-line .ok{color:#4ade80}
+.agent-log-line .warn{color:#fbbf24}
+.agent-log-line .info{color:#60a5fa}
+
+/* ── CFO REPORT ── */
+.report-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;margin-bottom:16px}
+.report-btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(99,102,241,.4)}
+.report-btn:active{transform:translateY(0)}
+.report-output{background:#0f172a;border-radius:10px;padding:20px;border:1px solid #1e293b;display:none}
+.report-output.visible{display:block}
+.report-section{margin-bottom:16px}
+.report-section:last-child{margin:0}
+.report-section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #1e293b}
+.report-section-title.blue{color:#60a5fa}
+.report-section-title.green{color:#4ade80}
+.report-section-title.orange{color:#fbbf24}
+.report-line{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:#cbd5e1;margin-bottom:6px;line-height:1.5}
+.report-line .dot{width:5px;height:5px;border-radius:50%;background:#6366f1;margin-top:6px;flex-shrink:0}
+.report-line .dot.red{background:#ef4444}
+.report-line .dot.green{background:#4ade80}
+.report-line .dot.orange{background:#fbbf24}
+.report-generating{text-align:center;padding:30px;color:#4ade80;font-size:13px;display:none}
+.report-generating .spinner{font-size:28px;animation:spin 1s linear infinite;display:block;margin-bottom:8px}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+/* ── PREDICTION CARDS ── */
+.pred-main{font-size:28px;font-weight:800;color:#0f172a;margin-bottom:4px}
+.pred-range{display:flex;gap:10px;margin:10px 0}
+.pred-case{flex:1;padding:10px;border-radius:8px;text-align:center}
+.pred-case.best{background:#f0fdf4;border:1px solid #bbf7d0}
+.pred-case.worst{background:#fff7ed;border:1px solid #fed7aa}
+.pred-case .case-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.pred-case.best .case-label{color:#16a34a}
+.pred-case.worst .case-label{color:#c2410c}
+.pred-case .case-val{font-size:16px;font-weight:800}
+.pred-case.best .case-val{color:#15803d}
+.pred-case.worst .case-val{color:#c2410c}
+.confidence-bar{margin-top:10px}
+.confidence-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;color:#64748b}
+.confidence-label span:last-child{font-weight:700;color:#6366f1}
+.conf-track{height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden}
+.conf-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#6366f1,#8b5cf6);transition:width 1s ease}
+
+/* ── WHAT-IF ── */
+.whatif-card{background:#fafafa;border:1.5px dashed #c7d2fe;border-radius:12px;padding:20px}
+.whatif-card .card-title{color:#4f46e5;margin-bottom:12px}
+.whatif-controls{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+.whatif-row{display:flex;align-items:center;gap:10px;font-size:13px}
+.whatif-row label{min-width:120px;font-weight:600;color:#374151}
+.whatif-row select,.whatif-row input{flex:1;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none}
+.whatif-row select:focus,.whatif-row input:focus{border-color:#6366f1}
+.whatif-btn{width:100%;padding:10px;background:#4f46e5;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s}
+.whatif-btn:hover{background:#4338ca}
+.whatif-result{margin-top:14px;padding:14px;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:10px;display:none}
+.whatif-result.visible{display:block}
+.whatif-result h4{font-size:13px;font-weight:700;color:#4f46e5;margin-bottom:8px}
+.whatif-line{font-size:13px;color:#374151;margin-bottom:5px;display:flex;align-items:center;gap:6px}
+
+/* ── SMART ALERTS ── */
+.alert-item{padding:14px 16px;border-radius:10px;margin-bottom:10px;border:1px solid;position:relative;overflow:hidden}
+.alert-item:last-child{margin:0}
+.alert-item.danger{background:#fef2f2;border-color:#fecaca}
+.alert-item.warning{background:#fffbeb;border-color:#fde68a}
+.alert-item.info{background:#eff6ff;border-color:#bfdbfe}
+.alert-item.success{background:#f0fdf4;border-color:#bbf7d0}
+.alert-header{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.alert-icon{font-size:17px}
+.alert-title{font-size:13px;font-weight:700}
+.alert-title.danger{color:#dc2626}.alert-title.warning{color:#d97706}
+.alert-title.info{color:#2563eb}.alert-title.success{color:#16a34a}
+.alert-body-text{font-size:12px;color:#475569;line-height:1.5;margin-bottom:6px}
+.alert-action{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:100px;background:rgba(0,0,0,.06)}
+.alert-action.danger{color:#dc2626}.alert-action.warning{color:#d97706}
+.alert-action.info{color:#2563eb}
+
+/* ── TRANSACTION TABLE ── */
+.tx-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f1f5f9}
+.tx-item:last-child{border:none}
+.tx-emoji{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.tx-info{flex:1;min-width:0}
+.tx-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-sub{font-size:11px;color:#94a3b8;margin-top:1px}
+.tx-right{text-align:right;flex-shrink:0}
+.tx-amount{font-size:13px;font-weight:700;color:#dc2626}
+.tx-date{font-size:10px;color:#94a3b8;margin-top:1px}
+.badge{font-size:10px;padding:2px 7px;border-radius:100px;font-weight:600}
+.badge-red{background:#fef2f2;color:#dc2626}
+.badge-orange{background:#fff7ed;color:#d97706}
+.badge-purple{background:#f5f3ff;color:#7c3aed}
+.badge-blue{background:#eff6ff;color:#2563eb}
+.badge-green{background:#f0fdf4;color:#16a34a}
+
+/* ── BUDGET BARS ── */
+.budget-row{margin-bottom:12px}.budget-row:last-child{margin:0}
+.budget-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;font-size:12px}
+.budget-name{font-weight:600;display:flex;align-items:center;gap:5px}
+.budget-vals{color:#64748b}
+.bar-track{height:7px;background:#f1f5f9;border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width .8s ease}
+.bar-pct{font-size:10px;color:#94a3b8;text-align:right;margin-top:2px}
+
+/* ── INSIGHT CHIPS ── */
+.insight-chip{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;background:#f8fafc;border-radius:9px;margin-bottom:8px;border:1px solid #e2e8f0}
+.insight-chip:last-child{margin:0}
+.insight-chip-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.insight-chip-text{font-size:12px;color:#334155;line-height:1.6}
+.insight-chip-text strong{color:#0f172a}
+
+/* ── FORM ── */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group.full{grid-column:1/-1}
+label{font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.05em}
+input,select,textarea{padding:9px 13px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;color:#1a1a2e;background:#fff;outline:none;transition:border-color .15s;width:100%}
+input:focus,select:focus,textarea:focus{border-color:#6366f1}
+textarea{resize:vertical;min-height:68px}
+.form-actions{display:flex;gap:9px;margin-top:6px}
+.btn-primary{padding:10px 22px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s}
+.btn-primary:hover{background:#4f46e5}
+.btn-secondary{padding:10px 18px;background:#fff;color:#64748b;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
+.btn-secondary:hover{border-color:#94a3b8;color:#1a1a2e}
+.btn-del{background:none;border:none;color:#cbd5e1;cursor:pointer;font-size:14px;padding:3px;border-radius:5px;transition:color .15s;flex-shrink:0}
+.btn-del:hover{color:#ef4444}
+
+/* ── TABLE ── */
+.tx-table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:9px 11px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;border-bottom:1px solid #e2e8f0;background:#f8fafc}
+td{padding:10px 11px;border-bottom:1px solid #f1f5f9;color:#334155;vertical-align:middle}
+tr:last-child td{border:none}
+tr:hover td{background:#f8fafc}
+.tbl-amount{font-weight:700;color:#dc2626}
+.tbl-vendor{font-weight:600;color:#0f172a}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;right:24px;background:#0f172a;color:#fff;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:500;z-index:9999;opacity:0;transform:translateY(14px);transition:all .3s ease;pointer-events:none;display:flex;align-items:center;gap:7px}
+.toast.show{opacity:1;transform:translateY(0)}
+
+/* ── PRED ROW ── */
+.pred-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #f1f5f9;font-size:12px}
+.pred-row:last-child{border:none}
+.pred-cat{display:flex;align-items:center;gap:7px;color:#334155;font-weight:500}
+.pred-vals{display:flex;align-items:center;gap:7px}
+.pred-val{font-weight:700;color:#0f172a;font-size:13px}
+.pred-change{font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600}
+.pred-up{background:#fef2f2;color:#dc2626}
+.pred-down{background:#f0fdf4;color:#16a34a}
+.pred-flat{background:#f8fafc;color:#64748b}
+
+/* ── SECTION LABEL ── */
+.section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#94a3b8;margin-bottom:10px;margin-top:20px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:960px){
+  .stats-row{grid-template-columns:1fr 1fr}
+  .grid-2,.grid-3,.grid-large,.agent-grid{grid-template-columns:1fr}
+  .page{padding:16px}
+  .navbar{padding:0 14px}
+  .nav-tabs .nav-tab{padding:6px 10px;font-size:12px}
+}
+</style>
+</head>
+<body>
+
+<!-- ── WELCOME OVERLAY ── -->
+<div id="welcomeOverlay" class="welcome-overlay" style="display:none">
+  <div class="welcome-box">
+    <div class="welcome-logo">🧠</div>
+    <h2>Welcome to CFO-OS</h2>
+    <p>AI-Native CFO Operating System.<br/>How would you like to get started?</p>
+    <div class="welcome-options">
+      <button class="welcome-btn demo" onclick="loadDemo()">
+        <span class="wb-icon">📊</span>
+        <span class="wb-title">Use Demo Data</span>
+        <span class="wb-desc">Load sample transactions & budgets to explore the full experience</span>
+      </button>
+      <button class="welcome-btn fresh" onclick="startFresh()">
+        <span class="wb-icon">✨</span>
+        <span class="wb-title">Start Fresh</span>
+        <span class="wb-desc">Begin with a clean slate and enter your own real data</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ── NAVBAR ── -->
+<nav class="navbar">
+  <div class="nav-brand">
+    <div class="brand-badge">🧠</div>
+    <div>
+      <div>CFO-OS</div>
+      <div class="brand-sub">AI-Native CFO Operating System</div>
+    </div>
+  </div>
+
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="goTo('dashboard',this)">📊 Dashboard</button>
+    <button class="nav-tab" onclick="goTo('agents',this)">🤖 AI Agents</button>
+    <button class="nav-tab" onclick="goTo('insights',this)">💡 Insights</button>
+    <button class="nav-tab" onclick="goTo('alerts',this)">🔔 Alerts <span id="alertBadge" style="display:none;background:#ef4444;color:#fff;font-size:10px;padding:1px 5px;border-radius:8px;margin-left:2px"></span></button>
+    <button class="nav-tab" onclick="goTo('add',this)">➕ Add Expense</button>
+  </div>
+
+  <div class="nav-right">
+    <div class="agent-live"><div class="pulse"></div>4 Agents Active</div>
+    <div class="data-menu" id="dataMenu">
+      <button class="data-menu-btn" onclick="toggleDataMenu()">⚙ Data ▾</button>
+      <div class="data-dropdown" id="dataDropdown">
+        <button class="data-dd-item" onclick="loadDemo()">📊 Load Demo Data</button>
+        <button class="data-dd-item" onclick="startFresh()">✨ Clear &amp; Start Fresh</button>
+        <div class="data-dd-divider"></div>
+        <button class="data-dd-item" onclick="goTo('add', document.querySelectorAll('.nav-tab')[4])">➕ Add Expense</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════
+  PAGE: DASHBOARD
+════════════════════════════════ -->
+<div class="page active" id="page-dashboard">
+  <div class="page-header">
+    <h2>Financial Dashboard</h2>
+    <p>AI-powered overview · April 2025 · <span style="color:#4ade80;font-weight:600">✨ Showing demo financial insights</span></p>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card purple">
+      <div class="stat-label">Total Spent</div>
+      <div class="stat-value purple" id="s-total">₹0</div>
+      <div class="stat-desc">This month</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">Budget Remaining</div>
+      <div class="stat-value green" id="s-left">₹0</div>
+      <div class="stat-desc" id="s-left-sub">of ₹1,50,000</div>
+    </div>
+    <div class="stat-card orange">
+      <div class="stat-label">Transactions</div>
+      <div class="stat-value orange" id="s-tx">0</div>
+      <div class="stat-desc">Recorded this month</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-label">Active Alerts</div>
+      <div class="stat-value red" id="s-alerts">0</div>
+      <div class="stat-desc">Require attention</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><span>📈</span> Spending by Category</div>
+      <canvas id="barChart" height="210"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title"><span>🥧</span> Category Breakdown</div>
+      <canvas id="pieChart" height="210"></canvas>
+    </div>
+  </div>
+
+  <div class="grid-large">
+    <div class="card">
+      <div class="card-title"><span>🕐</span> Recent Transactions</div>
+      <div id="recentList"></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span>🎯</span> Budget Usage</div>
+      <div id="budgetBars"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+  PAGE: AI AGENTS
+════════════════════════════════ -->
+<div class="page" id="page-agents">
+  <div class="page-header">
+    <h2>AI Agents Panel</h2>
+    <p>Autonomous agents continuously analyze your financial data in real-time</p>
+  </div>
+
+  <!-- AGENT CARDS -->
+  <div class="agent-panel">
+    <div class="agent-panel-header">
+      <div class="agent-panel-title">🤖 AI Agents — Live Execution</div>
+      <div class="agent-live"><div class="pulse"></div>All Systems Running</div>
+    </div>
+    <div class="agent-grid">
+      <div class="agent-card running">
+        <div class="agent-icon">📥</div>
+        <div class="agent-name">Expense Agent</div>
+        <div class="agent-status active">Auto-categorizing transactions using keyword + rule matching. Tagging vendors to Food, Travel, SaaS, and more.</div>
+        <div class="agent-badge running"><div class="pulse" style="width:5px;height:5px"></div>Running</div>
+      </div>
+      <div class="agent-card running">
+        <div class="agent-icon">🔍</div>
+        <div class="agent-name">Anomaly Agent</div>
+        <div class="agent-status active">Scanning for transactions exceeding avg + 2σ per category. Flagging unusual vendors and spikes.</div>
+        <div class="agent-badge running"><div class="pulse" style="width:5px;height:5px"></div>Running</div>
+      </div>
+      <div class="agent-card running">
+        <div class="agent-icon">🔮</div>
+        <div class="agent-name">Forecast Agent</div>
+        <div class="agent-status active">Predicting next month spend using rolling averages with best/worst case confidence intervals.</div>
+        <div class="agent-badge running"><div class="pulse" style="width:5px;height:5px"></div>Running</div>
+      </div>
+      <div class="agent-card running">
+        <div class="agent-icon">🧠</div>
+        <div class="agent-name">CFO Agent</div>
+        <div class="agent-status active">Generating strategic recommendations, budget health scores, and executive summaries on demand.</div>
+        <div class="agent-badge running"><div class="pulse" style="width:5px;height:5px"></div>Running</div>
+      </div>
+    </div>
+    <div class="agent-log" id="agentLog"></div>
+  </div>
+
+  <!-- CFO REPORT -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title"><span>📄</span> AI CFO Report Generator</div>
+    <p style="font-size:12px;color:#64748b;margin-bottom:14px">Click below to generate a full CFO-grade financial summary with AI recommendations based on your current data.</p>
+    <button class="report-btn" onclick="generateCFOReport()">
+      🧠 Generate CFO Report
+    </button>
+    <div class="report-generating" id="reportSpinner">
+      <span class="spinner">⚙️</span>
+      CFO Agent is analyzing your financial data...
+    </div>
+    <div class="report-output" id="reportOutput"></div>
+  </div>
+
+  <!-- WHAT-IF -->
+  <div class="whatif-card">
+    <div class="card-title" style="margin-bottom:14px"><span>💡</span> What-If Scenario Planner</div>
+    <p style="font-size:12px;color:#64748b;margin-bottom:14px">Simulate budget changes and see immediate financial impact.</p>
+    <div class="whatif-controls">
+      <div class="whatif-row">
+        <label>If I reduce</label>
+        <select id="wi-cat">
+          <option value="Food">🍕 Food</option>
+          <option value="Travel">✈️ Travel</option>
+          <option value="Software">💻 Software</option>
+          <option value="Office">🖨️ Office</option>
+          <option value="Bills">⚡ Bills</option>
+          <option value="Marketing">📣 Marketing</option>
+        </select>
+        <label>by</label>
+        <input type="number" id="wi-pct" value="20" min="1" max="99" style="width:70px;flex:none"/>
+        <label>%</label>
+      </div>
+    </div>
+    <button class="whatif-btn" onclick="runWhatIf()">▶ Run Scenario</button>
+    <div class="whatif-result" id="wiResult"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+  PAGE: INSIGHTS
+════════════════════════════════ -->
+<div class="page" id="page-insights">
+  <div class="page-header">
+    <h2>AI Insights</h2>
+    <p>Smart analysis, predictions and patterns from your spending data</p>
+  </div>
+
+  <div class="section-label">🤖 AI-Generated Findings</div>
+  <div id="insightChips" style="margin-bottom:16px"></div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><span>📊</span> Category Spending</div>
+      <div id="catBreakdown"></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span>🔮</span> Next Month Predictions</div>
+      <p style="font-size:11px;color:#94a3b8;margin-bottom:12px">Forecast Agent · with confidence intervals</p>
+      <div id="predictions"></div>
+      <div style="margin-top:14px;padding:14px;background:#f5f3ff;border-radius:10px;border:1px solid #ddd6fe">
+        <div style="font-size:11px;color:#7c3aed;font-weight:700;margin-bottom:4px">📅 Total Next Month Estimate</div>
+        <div style="font-size:24px;font-weight:800;color:#4f46e5" id="totalPrediction">₹0</div>
+        <div class="pred-range" id="predRange"></div>
+        <div class="confidence-bar">
+          <div class="confidence-label"><span>Confidence</span><span id="confPct">82%</span></div>
+          <div class="conf-track"><div class="conf-fill" id="confFill" style="width:82%"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>📈</span> Daily Spending — Last 30 Days</div>
+    <canvas id="trendChart" height="140"></canvas>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+  PAGE: ALERTS
+════════════════════════════════ -->
+<div class="page" id="page-alerts">
+  <div class="page-header">
+    <h2>Alerts & Warnings</h2>
+    <p>AI-detected issues with smart action recommendations</p>
+  </div>
+  <div class="grid-large" style="align-items:start">
+    <div>
+      <div class="section-label">Active Alerts</div>
+      <div id="alertList"></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span>⚙️</span> Set Category Budgets</div>
+      <p style="font-size:12px;color:#64748b;margin-bottom:14px">Enter your budget per category. Choose whether the amount is per day, month, or year — CFO-OS will auto-convert to monthly for comparisons.</p>
+
+      <!-- Total Budget Input -->
+      <div style="background:#f5f3ff;border:1.5px solid #c4b5fd;border-radius:10px;padding:14px;margin-bottom:16px">
+        <div style="font-size:12px;font-weight:700;color:#4f46e5;margin-bottom:10px">💰 Total Monthly Budget Cap</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="position:relative;flex:1">
+            <span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:13px;color:#64748b;font-weight:600">₹</span>
+            <input type="number" id="totalBudgetInput" min="0" placeholder="e.g. 150000"
+              style="padding-left:26px;font-size:15px;font-weight:700;border-color:#c4b5fd"/>
+          </div>
+          <select id="totalBudgetPeriod" onchange="renderTotalBudgetHint()" style="width:110px;font-weight:600;border-color:#c4b5fd">
+            <option value="month">/ Month</option>
+            <option value="day">/ Day</option>
+            <option value="year">/ Year</option>
+          </select>
+          <button onclick="saveTotalBudget()" style="padding:9px 16px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">Set</button>
+        </div>
+        <div id="totalBudgetHint" style="font-size:11px;color:#7c3aed;margin-top:7px"></div>
+      </div>
+
+      <!-- Period toggle -->
+      <div style="display:flex;gap:6px;margin-bottom:16px;background:#f1f5f9;border-radius:8px;padding:4px">
+        <button id="period-day"   onclick="setPeriod('day')"   style="flex:1;padding:7px;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s">📅 Daily</button>
+        <button id="period-month" onclick="setPeriod('month')" style="flex:1;padding:7px;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;background:#6366f1;color:#fff">🗓 Monthly</button>
+        <button id="period-year"  onclick="setPeriod('year')"  style="flex:1;padding:7px;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s">📆 Yearly</button>
+      </div>
+
+      <p id="periodHint" style="font-size:11px;color:#94a3b8;margin-bottom:12px">Amounts entered as monthly. Alerts compare against monthly spend.</p>
+
+      <div id="budgetInputs" style="display:flex;flex-direction:column;gap:10px"></div>
+
+      <div style="margin-top:14px;padding:10px;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px;font-size:11px;color:#7c3aed">
+        💡 Monthly equivalent is always used for budget comparison regardless of input period.
+      </div>
+      <div style="margin-top:10px"><button class="btn-primary" onclick="saveBudgets()" style="width:100%">Save Budgets</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+  PAGE: ADD EXPENSE
+════════════════════════════════ -->
+<div class="page" id="page-add">
+  <div class="page-header">
+    <h2>Add Expense</h2>
+    <p>Record a transaction — Expense Agent will auto-categorize and analyze it instantly</p>
+  </div>
+
+  <div class="grid-2" style="align-items:start">
+    <div class="card">
+      <div class="card-title"><span>📝</span> New Transaction</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Amount (₹) *</label>
+          <input type="number" id="f-amount" placeholder="e.g. 3500" min="1"/>
+        </div>
+        <div class="form-group">
+          <label>Date *</label>
+          <input type="date" id="f-date"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Vendor / Merchant *</label>
+          <input type="text" id="f-vendor" placeholder="e.g. Swiggy, AWS, Uber"/>
+        </div>
+        <div class="form-group">
+          <label>Category *</label>
+          <select id="f-cat">
+            <option value="">— Select —</option>
+            <option value="Food">🍕 Food & Dining</option>
+            <option value="Travel">✈️ Travel</option>
+            <option value="Software">💻 Software & SaaS</option>
+            <option value="Office">🖨️ Office Supplies</option>
+            <option value="Bills">⚡ Bills & Utilities</option>
+            <option value="Marketing">📣 Marketing</option>
+            <option value="Other">📦 Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group full">
+          <label>Notes (optional)</label>
+          <textarea id="f-notes" placeholder="Any details about this expense..."></textarea>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn-primary" onclick="addExpense()">✓ Save Expense</button>
+        <button class="btn-secondary" onclick="clearForm()">Clear</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span>📋</span> All Transactions <span id="txTotal" style="font-size:11px;font-weight:500;color:#94a3b8;margin-left:4px"></span></div>
+      <div class="tx-table-wrap">
+        <table>
+          <thead><tr><th>Vendor</th><th>Category</th><th>Date</th><th>Amount</th><th></th></tr></thead>
+          <tbody id="allTxBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">✓ <span id="toastMsg">Done!</span></div>
+
+<script>
+// ─────────────────────────────
+//  DEMO DATA
+// ─────────────────────────────
+const DEMO_EXP = [
+  {id:1,  amount:4200,  date:'2025-04-01', vendor:'Swiggy Office',     category:'Food',      notes:'Team lunch'},
+  {id:2,  amount:18500, date:'2025-04-02', vendor:'IndiGo Airlines',   category:'Travel',    notes:'Client meeting Mumbai'},
+  {id:3,  amount:8999,  date:'2025-04-03', vendor:'AWS',               category:'Software',  notes:'Cloud hosting'},
+  {id:4,  amount:1800,  date:'2025-04-04', vendor:'Café Coffee Day',   category:'Food',      notes:'Investor meeting'},
+  {id:5,  amount:3200,  date:'2025-04-05', vendor:'Ola Business',      category:'Travel',    notes:'Airport drop'},
+  {id:6,  amount:6500,  date:'2025-04-06', vendor:'Stationery World',  category:'Office',    notes:'Supplies'},
+  {id:7,  amount:12000, date:'2025-04-08', vendor:'Zomato for Work',   category:'Food',      notes:'Department dinner'},
+  {id:8,  amount:4500,  date:'2025-04-09', vendor:'Figma Pro',         category:'Software',  notes:'Annual plan'},
+  {id:9,  amount:7800,  date:'2025-04-10', vendor:'BSES Electricity',  category:'Bills',     notes:'April bill'},
+  {id:10, amount:22000, date:'2025-04-11', vendor:'Hotel Taj',         category:'Travel',    notes:'Client hospitality'},
+  {id:11, amount:2100,  date:'2025-04-12', vendor:'Dominos',           category:'Food',      notes:'Late night sprint'},
+  {id:12, amount:5500,  date:'2025-04-13', vendor:'Google Workspace',  category:'Software',  notes:'Monthly sub'},
+  {id:13, amount:3000,  date:'2025-04-14', vendor:'Airtel Broadband',  category:'Bills',     notes:'Internet'},
+  {id:14, amount:9000,  date:'2025-04-15', vendor:'Facebook Ads',      category:'Marketing', notes:'April campaign'},
+  {id:15, amount:1500,  date:'2025-04-16', vendor:'Blinkit',           category:'Office',    notes:'Pantry'},
+  {id:16, amount:38000, date:'2025-04-17', vendor:'Emirates Airlines', category:'Travel',    notes:'Conference Dubai — ANOMALY'},
+  {id:17, amount:6200,  date:'2025-04-18', vendor:'Zomato for Work',   category:'Food',      notes:'Client dinner'},
+  {id:18, amount:11000, date:'2025-04-19', vendor:'Notion Teams',      category:'Software',  notes:'Annual renewal'},
+  {id:19, amount:4800,  date:'2025-04-20', vendor:'Uber Business',     category:'Travel',    notes:'Weekly commutes'},
+  {id:20, amount:8000,  date:'2025-04-21', vendor:'LinkedIn Ads',      category:'Marketing', notes:'Lead generation'},
+];
+
+const DEMO_BUDGETS = {Food:25000,Travel:50000,Software:25000,Office:10000,Bills:15000,Marketing:20000,Other:5000};
+let TOTAL_BUDGET = parseInt(localStorage.getItem('cfoos_total_budget') || '150000');
+
+const CAT = {
+  Food:      {emoji:'🍕',color:'#f97316'},
+  Travel:    {emoji:'✈️',color:'#3b82f6'},
+  Software:  {emoji:'💻',color:'#8b5cf6'},
+  Office:    {emoji:'🖨️',color:'#10b981'},
+  Bills:     {emoji:'⚡',color:'#ef4444'},
+  Marketing: {emoji:'📣',color:'#ec4899'},
+  Other:     {emoji:'📦',color:'#6b7280'},
+};
+
+// ─────────────────────────────
+//  STATE
+// ─────────────────────────────
+let expenses = JSON.parse(localStorage.getItem('cfoos_exp')||'null');
+let budgets  = JSON.parse(localStorage.getItem('cfoos_bud')||'null') || {...DEMO_BUDGETS};
+const firstTime = expenses === null;
+if(expenses === null) expenses = [];
+
+function save(){
+  localStorage.setItem('cfoos_exp',JSON.stringify(expenses));
+  localStorage.setItem('cfoos_bud',JSON.stringify(budgets));
+}
+
+// resetDemo removed
+
+
+// ─────────────────────────────
+//  WELCOME SCREEN & DATA MODES
+// ─────────────────────────────
+function showWelcome() {
+  document.getElementById('welcomeOverlay').style.display = 'flex';
+}
+function hideWelcome() {
+  document.getElementById('welcomeOverlay').style.display = 'none';
+}
+
+function loadDemo() {
+  expenses = [...DEMO_EXP];
+  budgets  = {...DEMO_BUDGETS};
+  save();
+  hideWelcome();
+  closeDataMenu();
+  renderAll();
+  toast('Demo data loaded!');
+}
+
+function startFresh() {
+  if(expenses.length > 0 && !confirm('This will clear all current data. Continue?')) return;
+  expenses = [];
+  budgets  = {...DEMO_BUDGETS};
+  save();
+  hideWelcome();
+  closeDataMenu();
+  renderAll();
+  toast('Started fresh — add your first expense!');
+}
+
+function toggleDataMenu() {
+  document.getElementById('dataDropdown').classList.toggle('open');
+}
+function closeDataMenu() {
+  document.getElementById('dataDropdown').classList.remove('open');
+}
+// Close dropdown when clicking outside
+document.addEventListener('click', e => {
+  const menu = document.getElementById('dataMenu');
+  if (menu && !menu.contains(e.target)) closeDataMenu();
+});
+
+// ─────────────────────────────
+//  NAVIGATION
+// ─────────────────────────────
+function goTo(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(btn) btn.classList.add('active');
+  renderAll();
+}
+
+// ─────────────────────────────
+//  HELPERS
+// ─────────────────────────────
+const fmt  = n=>'₹'+Math.round(n).toLocaleString('en-IN');
+const fmtD = d=>new Date(d+'T00:00:00').toLocaleDateString('en-IN',{day:'2-digit',month:'short'});
+const totalSpent = ()=>expenses.reduce((s,e)=>s+e.amount,0);
+
+function byCategory(){
+  const m={};
+  expenses.forEach(e=>{m[e.category]=(m[e.category]||0)+e.amount});
+  return m;
+}
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  document.getElementById('toastMsg').textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ─────────────────────────────
+//  AI LOGIC
+// ─────────────────────────────
+function isAnomaly(tx){
+  const same=expenses.filter(e=>e.category===tx.category&&e.id!==tx.id);
+  if(same.length<2) return false;
+  const avg=same.reduce((s,e)=>s+e.amount,0)/same.length;
+  const std=Math.sqrt(same.reduce((s,e)=>s+(e.amount-avg)**2,0)/same.length);
+  return tx.amount > avg+2*std;
+}
+
+function predict(cat){
+  const txs=expenses.filter(e=>e.category===cat);
+  if(!txs.length) return 0;
+  const total=txs.reduce((s,e)=>s+e.amount,0);
+  const avg=total/txs.length;
+  const sorted=[...txs].sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const h=Math.floor(sorted.length/2);
+  const first=sorted.slice(0,h).reduce((s,e)=>s+e.amount,0)/Math.max(h,1);
+  const last=sorted.slice(h).reduce((s,e)=>s+e.amount,0)/Math.max(sorted.length-h,1);
+  const factor=last>first*1.05?1.12:last<first*0.95?0.9:1.0;
+  return Math.round(avg*Math.max(txs.length,1)*factor);
+}
+
+function computeAlerts(){
+  const alerts=[]; const cats=byCategory(); const total=totalSpent();
+
+  Object.entries(budgets).forEach(([cat,limit])=>{
+    const spent=cats[cat]||0; const pct=(spent/limit)*100;
+    const m=CAT[cat]||CAT.Other;
+    if(pct>=100){
+      const topVendors=[...expenses].filter(e=>e.category===cat).sort((a,b)=>b.amount-a.amount);
+      const topV=topVendors[0]?.vendor||'expenses';
+      alerts.push({type:'danger',icon:'🚨',
+        title:`${cat} Budget Exceeded`,
+        body:`Spent ${fmt(spent)} against a limit of ${fmt(limit)}. Over by ${fmt(spent-limit)}.`,
+        action:`↳ Reduce ${topV} orders to save ${fmt(Math.ceil((spent-limit)/1000)*1000)} next month`});
+    } else if(pct>=80){
+      const remaining=fmt(limit-spent);
+      const txsLeft=Math.floor((limit-spent)/((cats[cat]||1)/Math.max(expenses.filter(e=>e.category===cat).length,1)));
+      alerts.push({type:'warning',icon:'⚠️',
+        title:`${cat} Nearing Budget Limit`,
+        body:`${Math.round(pct)}% used (${fmt(spent)} of ${fmt(limit)}). ${remaining} remaining.`,
+        action:`↳ Limit to ${Math.max(txsLeft,1)} more ${cat.toLowerCase()} transaction${txsLeft!==1?'s':''} this month`});
+    }
+  });
+
+  const tpct=(total/TOTAL_BUDGET)*100;
+  if(tpct>=100) alerts.push({type:'danger',icon:'🚨',title:'Overall Budget Exceeded',body:`Total ${fmt(total)} crossed monthly budget of ${fmt(TOTAL_BUDGET)}.`,action:'↳ Freeze discretionary spending immediately'});
+  else if(tpct>=80) alerts.push({type:'warning',icon:'⚠️',title:'Monthly Budget Warning',body:`${Math.round(tpct)}% used. ${fmt(TOTAL_BUDGET-total)} remaining.`,action:'↳ Review all non-essential approvals this week'});
+
+  expenses.filter(isAnomaly).forEach(e=>{
+    const same=expenses.filter(x=>x.category===e.category&&x.id!==e.id);
+    const avg=same.length?same.reduce((s,x)=>s+x.amount,0)/same.length:0;
+    alerts.push({type:'info',icon:'🔍',
+      title:`Unusual Transaction: ${e.vendor}`,
+      body:`${fmt(e.amount)} on ${fmtD(e.date)} is ${Math.round((e.amount/avg-1)*100)}% above average ${e.category} spend of ${fmt(Math.round(avg))}.`,
+      action:`↳ Request receipt and approval for this transaction`});
+  });
+
+  if(!alerts.length) alerts.push({type:'success',icon:'✅',title:'All Budgets On Track!',body:'Great discipline — all categories are within limits.',action:''});
+  return alerts;
+}
+
+// ─────────────────────────────
+//  CFO REPORT
+// ─────────────────────────────
+function generateCFOReport(){
+  const spinner=document.getElementById('reportSpinner');
+  const output=document.getElementById('reportOutput');
+  output.classList.remove('visible');
+  spinner.style.display='block';
+
+  setTimeout(()=>{
+    spinner.style.display='none';
+    const cats=byCategory();
+    const total=totalSpent();
+    const tpct=Math.round((total/TOTAL_BUDGET)*100);
+    const sorted=Object.entries(cats).sort((a,b)=>b[1]-a[1]);
+    const top=sorted[0];
+    const anomCount=expenses.filter(isAnomaly).length;
+    const travelSpent=cats['Travel']||0;
+    const travelBudg=budgets['Travel']||1;
+    const foodSpent=cats['Food']||0;
+    const foodBudg=budgets['Food']||1;
+    const swSpent=cats['Software']||0;
+
+    const predTotal=Object.keys(CAT).reduce((s,c)=>s+predict(c),0);
+    const growth=predTotal>total?Math.round((predTotal/total-1)*100):0;
+
+    output.innerHTML=`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #1e293b">
+      <span style="font-size:20px">📄</span>
+      <div>
+        <div style="font-size:14px;font-weight:800;color:#e2e8f0">CFO Financial Summary</div>
+        <div style="font-size:11px;color:#475569">Generated by CFO Agent · April 2025 · Confidence: 82%</div>
+      </div>
+    </div>
+
+    <div class="report-section">
+      <div class="report-section-title blue">📊 Executive Summary</div>
+      <div class="report-line"><div class="dot"></div><span>Total spend this month is <strong style="color:#e2e8f0">${fmt(total)}</strong>, which is <strong style="color:#e2e8f0">${tpct}%</strong> of the monthly budget of ${fmt(TOTAL_BUDGET)}.</span></div>
+      <div class="report-line"><div class="dot ${travelSpent>travelBudg*0.9?'red':''}"></div><span>Travel category has used ${Math.round((travelSpent/travelBudg)*100)}% of its budget at ${fmt(travelSpent)} — ${travelSpent>travelBudg?'exceeded limit':'nearing cap'}.</span></div>
+      <div class="report-line"><div class="dot ${anomCount>0?'orange':'green'}"></div><span>${anomCount} anomalous transaction${anomCount!==1?'s':''} detected requiring review.</span></div>
+      <div class="report-line"><div class="dot"></div><span>${top?`${top[0]} is the largest cost center at ${fmt(top[1])} (${Math.round((top[1]/total)*100)}% of total spend).`:'Insufficient data for top category analysis.'}</span></div>
+    </div>
+
+    <div class="report-section">
+      <div class="report-section-title orange">⚠️ Risk Flags</div>
+      <div class="report-line"><div class="dot red"></div><span>Travel expenses (${fmt(travelSpent)}) are ${travelSpent>travelBudg?`over budget by ${fmt(travelSpent-travelBudg)}`:`at ${Math.round((travelSpent/travelBudg)*100)}% of limit`}. International trips are the primary driver.</span></div>
+      <div class="report-line"><div class="dot red"></div><span>Food & Dining at ${fmt(foodSpent)} represents ${Math.round((foodSpent/foodBudg)*100)}% of budget. Per-meal cost is trending upward.</span></div>
+      ${anomCount?`<div class="report-line"><div class="dot orange"></div><span>${anomCount} transaction${anomCount!==1?'s':''} flagged as statistically unusual. Recommend review before month close.</span></div>`:''}
+    </div>
+
+    <div class="report-section">
+      <div class="report-section-title green">📌 AI Recommendations</div>
+      <div class="report-line"><div class="dot green"></div><span>Reduce travel expenses by <strong style="color:#4ade80">15–20%</strong> next month by replacing non-critical trips with video conferencing.</span></div>
+      <div class="report-line"><div class="dot green"></div><span>Consolidate SaaS subscriptions: current software spend is ${fmt(swSpent)}. Switching to annual billing can save approximately ${fmt(Math.round(swSpent*0.15))} (15%).</span></div>
+      <div class="report-line"><div class="dot green"></div><span>Set a per-meal cap of ₹500 for team food orders to reduce the Food category by an estimated ${fmt(Math.round(foodSpent*0.2))}/month.</span></div>
+      <div class="report-line"><div class="dot green"></div><span>AI Forecast: next month spend projected at <strong style="color:#4ade80">${fmt(predTotal)}</strong> (${growth>0?`↑${growth}% growth`:'stable'}). Recommend budget review if >₹1,50,000.</span></div>
+    </div>`;
+
+    output.classList.add('visible');
+  }, 2200);
+}
+
+// ─────────────────────────────
+//  WHAT-IF
+// ─────────────────────────────
+function runWhatIf(){
+  const cat=document.getElementById('wi-cat').value;
+  const pct=parseFloat(document.getElementById('wi-pct').value)||20;
+  const cats=byCategory();
+  const current=cats[cat]||0;
+  const saved=Math.round(current*(pct/100));
+  const newTotal=totalSpent()-saved;
+  const newUtil=Math.round((newTotal/TOTAL_BUDGET)*100);
+  const el=document.getElementById('wiResult');
+
+  el.innerHTML=`
+  <h4>📊 Scenario: Reduce ${cat} by ${pct}%</h4>
+  <div class="whatif-line">💰 <span>You save <strong style="color:#4f46e5">${fmt(saved)}/month</strong> on ${cat} expenses</span></div>
+  <div class="whatif-line">📉 <span>Total spend drops from <strong>${fmt(totalSpent())}</strong> to <strong style="color:#16a34a">${fmt(newTotal)}</strong></span></div>
+  <div class="whatif-line">📊 <span>Budget utilization drops from <strong>${Math.round((totalSpent()/TOTAL_BUDGET)*100)}%</strong> to <strong style="color:#16a34a">${newUtil}%</strong></span></div>
+  <div class="whatif-line">📅 <span>Annual saving potential: <strong style="color:#4f46e5">${fmt(saved*12)}</strong></span></div>
+  `;
+  el.classList.add('visible');
+}
+
+// ─────────────────────────────
+//  AGENT LOG
+// ─────────────────────────────
+const LOG_LINES = [
+  {cl:'ok',  text:'[Expense Agent] Categorized 20 transactions → Food:5, Travel:4, Software:4, Office:2, Bills:2, Marketing:2, Other:1'},
+  {cl:'info',text:'[Anomaly Agent] Scanning 20 transactions for statistical anomalies...'},
+  {cl:'warn', text:'[Anomaly Agent] ⚠ Flagged: Emirates Airlines ₹38,000 — 94% above Travel avg (₹19,600)'},
+  {cl:'ok',  text:'[Forecast Agent] Prediction complete — Next month: ₹1,35,000 · Best: ₹1,18,000 · Worst: ₹1,52,000'},
+  {cl:'info',text:'[CFO Agent] Budget health check: Travel 87% · Food 82% · Software 75% · Bills 72%'},
+  {cl:'ok',  text:'[CFO Agent] 4 strategic recommendations generated → Click "Generate CFO Report"'},
+  {cl:'info',text:'[Expense Agent] New transaction watch mode — active'},
+  {cl:'ok',  text:'[All Agents] Status: HEALTHY · Last sync: just now'},
+];
+
+function renderAgentLog(){
+  const el=document.getElementById('agentLog');
+  if(!el) return;
+  const now=new Date();
+  const timeStr=now.getHours()+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');
+  el.innerHTML=LOG_LINES.map(l=>
+    `<div class="agent-log-line"><span class="ts">[${timeStr}]</span> <span class="${l.cl}">${l.text}</span></div>`
+  ).join('');
+}
+
+// ─────────────────────────────
+//  RENDER ALL
+// ─────────────────────────────
+function renderAll(){
+  renderStats(); renderBudgetBars(); renderRecentList();
+  renderAllTxTable(); renderInsights(); renderAlerts();
+  renderBudgetInputs(); renderAgentLog(); renderCharts();
+}
+
+function renderStats(){
+  const spent=totalSpent(); const left=TOTAL_BUDGET-spent;
+  const alCnt=computeAlerts().filter(a=>a.type!=='success').length;
+  document.getElementById('s-total').textContent=fmt(spent);
+  document.getElementById('s-left').textContent=fmt(Math.max(left,0));
+  document.getElementById('s-left').className='stat-value '+(left<0?'red':'green');
+  document.getElementById('s-tx').textContent=expenses.length;
+  document.getElementById('s-alerts').textContent=alCnt;
+  const b=document.getElementById('alertBadge');
+  b.style.display=alCnt>0?'inline':'none'; b.textContent=alCnt;
+}
+
+function renderBudgetBars(){
+  const cats=byCategory();
+  document.getElementById('budgetBars').innerHTML=Object.entries(budgets).map(([cat,limit])=>{
+    const spent=cats[cat]||0; const pct=Math.min((spent/limit)*100,100);
+    const color=pct>=100?'#ef4444':pct>=80?'#f59e0b':'#6366f1';
+    const m=CAT[cat]||CAT.Other;
+    return `<div class="budget-row">
+      <div class="budget-top">
+        <span class="budget-name">${m.emoji} ${cat}</span>
+        <span class="budget-vals">${fmt(spent)} / ${fmt(limit)}</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
+      <div class="bar-pct">${Math.round(pct)}% used</div>
+    </div>`;
+  }).join('');
+}
+
+function txRow(e,del=false){
+  const m=CAT[e.category]||CAT.Other;
+  const anom=isAnomaly(e);
+  return `<div class="tx-item">
+    <div class="tx-emoji" style="background:${m.color}22">${m.emoji}</div>
+    <div class="tx-info">
+      <div class="tx-name">${e.vendor}</div>
+      <div class="tx-sub">${e.category}${e.notes?' · '+e.notes.slice(0,30):''}</div>
+    </div>
+    ${anom?`<span class="badge badge-orange" style="margin-right:6px;flex-shrink:0">⚠ Unusual</span>`:''}
+    <div class="tx-right">
+      <div class="tx-amount">-${fmt(e.amount)}</div>
+      <div class="tx-date">${fmtD(e.date)}</div>
+    </div>
+    ${del?`<button class="btn-del" onclick="deleteExpense(${e.id})" title="Delete">✕</button>`:''}
+  </div>`;
+}
+
+function renderRecentList(){
+  document.getElementById('recentList').innerHTML=expenses.slice(0,7).map(e=>txRow(e,false)).join('');
+}
+
+function renderAllTxTable(){
+  document.getElementById('txTotal').textContent=expenses.length+' records';
+  document.getElementById('allTxBody').innerHTML=expenses.map(e=>{
+    const m=CAT[e.category]||CAT.Other;
+    return `<tr>
+      <td class="tbl-vendor">${m.emoji} ${e.vendor}</td>
+      <td><span class="badge badge-purple">${e.category}</span></td>
+      <td>${fmtD(e.date)}</td>
+      <td class="tbl-amount">-${fmt(e.amount)}</td>
+      <td style="display:flex;gap:5px;align-items:center">
+        ${isAnomaly(e)?`<span class="badge badge-orange">⚠</span>`:''}
+        <button class="btn-del" onclick="deleteExpense(${e.id})">✕</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderInsights(){
+  const cats=byCategory(); const total=totalSpent();
+  const sorted=Object.entries(cats).sort((a,b)=>b[1]-a[1]);
+  const anomTxs=expenses.filter(isAnomaly);
+  const chips=[];
+
+  if(sorted.length){
+    const [topCat,topAmt]=sorted[0];
+    chips.push({icon:'🏆',text:`<strong>${topCat}</strong> is the biggest cost center at <strong>${fmt(topAmt)}</strong> (${Math.round((topAmt/total)*100)}% of total spend).`});
+  }
+
+  const foodSpent=cats['Food']||0,foodBudg=budgets['Food']||1;
+  if(foodSpent>foodBudg*0.6){
+    const ovr=Math.round((foodSpent/foodBudg)*100);
+    chips.push({icon:'🍕',text:`Food spending is at <strong>${ovr}%</strong> of budget. Reducing Swiggy/Zomato orders by 3/week could save approximately <strong>${fmt(Math.round(foodSpent*0.2))}/month</strong>.`});
+  }
+
+  if(anomTxs.length) chips.push({icon:'⚠️',text:`<strong>${anomTxs.length} unusual transaction${anomTxs.length>1?'s':''}</strong> detected — ${anomTxs.map(e=>e.vendor).join(', ')}. These are statistically higher than normal for their categories.`});
+
+  const swSpent=cats['Software']||0;
+  if(swSpent>5000) chips.push({icon:'💻',text:`Software spend is ${fmt(swSpent)}. Switching all ${expenses.filter(e=>e.category==='Software').length} subscriptions to annual billing could save <strong>${fmt(Math.round(swSpent*0.15))}/month</strong>.`});
+
+  const predTotal=Object.keys(CAT).reduce((s,c)=>s+predict(c),0);
+  chips.push({icon:'🔮',text:`Forecast Agent predicts next month total: <strong>${fmt(predTotal)}</strong>. ${predTotal>total?`That's ${Math.round((predTotal/total-1)*100)}% higher than this month — action recommended.`:'Spending appears stable.'}`});
+
+  document.getElementById('insightChips').innerHTML=chips.map(c=>
+    `<div class="insight-chip"><div class="insight-chip-icon">${c.icon}</div><div class="insight-chip-text">${c.text}</div></div>`
+  ).join('');
+
+  // Category bars
+  const maxAmt=sorted[0]?.[1]||1;
+  document.getElementById('catBreakdown').innerHTML=sorted.map(([cat,amt])=>{
+    const m=CAT[cat]||CAT.Other;
+    const w=(amt/maxAmt)*100;
+    return `<div style="margin-bottom:11px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+        <span style="font-weight:600">${m.emoji} ${cat}</span>
+        <span style="color:#64748b">${fmt(amt)}</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${m.color}"></div></div>
+    </div>`;
+  }).join('');
+
+  // Predictions with confidence
+  let predTotalCalc=0;
+  document.getElementById('predictions').innerHTML=Object.entries(CAT).map(([cat,meta])=>{
+    const curr=cats[cat]||0; const pred=predict(cat); predTotalCalc+=pred;
+    const trend=pred>curr*1.05?'up':pred<curr*0.95?'down':'flat';
+    const trendLabel={up:'↑ Rising',down:'↓ Falling',flat:'→ Stable'};
+    return `<div class="pred-row">
+      <span class="pred-cat">${meta.emoji} ${cat}</span>
+      <span class="pred-vals">
+        <span class="pred-val">${fmt(pred)}</span>
+        <span class="pred-change pred-${trend}">${trendLabel[trend]}</span>
+      </span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('totalPrediction').textContent=fmt(predTotalCalc);
+  const best=Math.round(predTotalCalc*0.88),worst=Math.round(predTotalCalc*1.12),conf=82;
+  document.getElementById('predRange').innerHTML=`
+    <div class="pred-case best" style="flex:1"><div class="case-label">Best Case</div><div class="case-val">${fmt(best)}</div></div>
+    <div class="pred-case worst" style="flex:1"><div class="case-label">Worst Case</div><div class="case-val">${fmt(worst)}</div></div>`;
+  document.getElementById('confPct').textContent=conf+'%';
+  document.getElementById('confFill').style.width=conf+'%';
+}
+
+function renderAlerts(){
+  const alerts=computeAlerts();
+  document.getElementById('alertList').innerHTML=alerts.map(a=>`
+    <div class="alert-item ${a.type}">
+      <div class="alert-header">
+        <span class="alert-icon">${a.icon}</span>
+        <span class="alert-title ${a.type}">${a.title}</span>
+      </div>
+      <div class="alert-body-text">${a.body}</div>
+      ${a.action?`<div class="alert-action ${a.type}">${a.action}</div>`:''}
+    </div>`).join('');
+}
+
+// ─────────────────────────────
+//  TOTAL BUDGET SETTER
+// ─────────────────────────────
+function saveTotalBudget() {
+  const raw = parseFloat(document.getElementById('totalBudgetInput').value);
+  const period = document.getElementById('totalBudgetPeriod').value;
+  if (!raw || raw <= 0) return toast('⚠ Enter a valid total budget');
+  // Convert to monthly
+  const monthly = period === 'day' ? Math.round(raw * 30)
+                : period === 'year' ? Math.round(raw / 12)
+                : Math.round(raw);
+  TOTAL_BUDGET = monthly;
+  localStorage.setItem('cfoos_total_budget', monthly);
+  renderTotalBudgetHint();
+  renderAll();
+  toast('Total budget set to ' + fmt(monthly) + '/month ✓');
+}
+
+function renderTotalBudgetHint() {
+  const hint = document.getElementById('totalBudgetHint');
+  if (!hint) return;
+  hint.textContent = 'Current cap: ' + fmt(TOTAL_BUDGET) + '/month  ·  '
+    + fmt(Math.round(TOTAL_BUDGET / 30)) + '/day  ·  '
+    + fmt(TOTAL_BUDGET * 12) + '/year';
+  // Pre-fill input with current monthly value
+  const inp = document.getElementById('totalBudgetInput');
+  const sel = document.getElementById('totalBudgetPeriod');
+  if (inp && sel) {
+    const period = sel.value;
+    inp.value = period === 'day' ? Math.round(TOTAL_BUDGET / 30)
+              : period === 'year' ? TOTAL_BUDGET * 12
+              : TOTAL_BUDGET;
+  }
+}
+
+// ─────────────────────────────
+//  BUDGET PERIOD (day / month / year)
+// ─────────────────────────────
+let budgetPeriod = localStorage.getItem('cfoos_period') || 'month';
+
+// Convert whatever the user typed into a monthly figure
+function toMonthly(val, period) {
+  if (period === 'day')   return Math.round(val * 30);
+  if (period === 'year')  return Math.round(val / 12);
+  return Math.round(val); // month — no conversion
+}
+
+// Convert stored monthly budget back to the display period
+function fromMonthly(monthly, period) {
+  if (period === 'day')  return Math.round(monthly / 30);
+  if (period === 'year') return Math.round(monthly * 12);
+  return Math.round(monthly);
+}
+
+const PERIOD_HINTS = {
+  day:   'Amounts entered as daily. CFO-OS multiplies by 30 to get monthly budget.',
+  month: 'Amounts entered as monthly. Alerts compare against monthly spend.',
+  year:  'Amounts entered as yearly. CFO-OS divides by 12 to get monthly budget.',
+};
+
+function setPeriod(p) {
+  budgetPeriod = p;
+  localStorage.setItem('cfoos_period', p);
+  // update pill styling
+  ['day','month','year'].forEach(id => {
+    const b = document.getElementById('period-' + id);
+    if (!b) return;
+    if (id === p) { b.style.background='#6366f1'; b.style.color='#fff'; }
+    else          { b.style.background='transparent'; b.style.color='#64748b'; }
+  });
+  document.getElementById('periodHint').textContent = PERIOD_HINTS[p];
+  renderBudgetInputs();
+}
+
+function renderBudgetInputs() {
+  // sync pill state on every render
+  ['day','month','year'].forEach(id => {
+    const b = document.getElementById('period-' + id);
+    if (!b) return;
+    if (id === budgetPeriod) { b.style.background='#6366f1'; b.style.color='#fff'; }
+    else                     { b.style.background='transparent'; b.style.color='#64748b'; }
+  });
+  const hint = document.getElementById('periodHint');
+  if (hint) hint.textContent = PERIOD_HINTS[budgetPeriod];
+
+  renderTotalBudgetHint();
+  const periodLabel = {day:'/ day', month:'/ month', year:'/ year'}[budgetPeriod];
+
+  document.getElementById('budgetInputs').innerHTML = Object.entries(budgets).map(([cat, monthlyVal]) => {
+    const m = CAT[cat] || CAT.Other;
+    const displayVal = fromMonthly(monthlyVal, budgetPeriod);
+    return `<div style="display:flex;align-items:center;gap:10px">
+      <span style="font-size:18px;width:24px;text-align:center">${m.emoji}</span>
+      <label style="min-width:90px;text-transform:none;font-size:13px;font-weight:600;letter-spacing:0;color:#374151">${cat}</label>
+      <div style="flex:1;position:relative">
+        <input type="number" id="b-${cat}" value="${displayVal}" min="0" style="padding-right:60px"/>
+        <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:11px;color:#94a3b8;font-weight:600;pointer-events:none">${periodLabel}</span>
+      </div>
+      <span style="font-size:11px;color:#94a3b8;white-space:nowrap">≈ ${fmt(monthlyVal)}/mo</span>
+    </div>`;
+  }).join('');
+}
+
+function saveBudgets() {
+  Object.keys(budgets).forEach(cat => {
+    const el = document.getElementById('b-' + cat);
+    if (el) {
+      const v = parseFloat(el.value);
+      if (!isNaN(v) && v >= 0) budgets[cat] = toMonthly(v, budgetPeriod);
+    }
+  });
+  save(); renderAll();
+  toast(`Budgets saved as ${budgetPeriod}ly amounts ✓`);
+}
+
+// ─────────────────────────────
+//  CHARTS
+// ─────────────────────────────
+let barC,pieC,trendC;
+const TT={backgroundColor:'#0f172a',titleColor:'#e2e8f0',bodyColor:'#94a3b8',padding:10,cornerRadius:8};
+
+function renderCharts(){
+  const cats=byCategory();
+  const labels=Object.keys(cats), data=Object.values(cats), colors=labels.map(l=>(CAT[l]||CAT.Other).color);
+
+  if(barC) barC.destroy();
+  barC=new Chart(document.getElementById('barChart'),{
+    type:'bar',
+    data:{labels,datasets:[{data,backgroundColor:colors.map(c=>c+'cc'),borderRadius:8,borderSkipped:false}]},
+    options:{responsive:true,plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:c=>' '+fmt(c.raw)}}},
+      scales:{x:{grid:{display:false},ticks:{color:'#94a3b8',font:{size:11}}},
+              y:{grid:{color:'#f1f5f9'},ticks:{color:'#94a3b8',font:{size:10},callback:v=>'₹'+(v/1000).toFixed(0)+'k'},border:{display:false}}}}
+  });
+
+  if(pieC) pieC.destroy();
+  if(labels.length){
+    pieC=new Chart(document.getElementById('pieChart'),{
+      type:'doughnut',
+      data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:0,hoverOffset:8}]},
+      options:{responsive:true,cutout:'65%',plugins:{
+        legend:{position:'right',labels:{font:{size:11},color:'#334155',padding:12,boxWidth:10,borderRadius:3}},
+        tooltip:{...TT,callbacks:{label:c=>` ${c.label}: ${fmt(c.raw)}`}}}}
+    });
+  }
+
+  if(trendC) trendC.destroy();
+  const dayMap={};
+  expenses.forEach(e=>{dayMap[e.date]=(dayMap[e.date]||0)+e.amount});
+  const tLabels=[],tData=[];
+  const now=new Date();
+  for(let i=29;i>=0;i--){
+    const d=new Date(now); d.setDate(d.getDate()-i);
+    const k=d.toISOString().split('T')[0];
+    tLabels.push(d.getDate()+'/'+(d.getMonth()+1));
+    tData.push(dayMap[k]||0);
+  }
+  trendC=new Chart(document.getElementById('trendChart'),{
+    type:'line',
+    data:{labels:tLabels,datasets:[{data:tData,borderColor:'#6366f1',backgroundColor:'rgba(99,102,241,0.08)',fill:true,tension:0.4,pointRadius:tData.map(v=>v>0?4:0),pointBackgroundColor:'#6366f1',borderWidth:2}]},
+    options:{responsive:true,plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:c=>' '+fmt(c.raw)}}},
+      scales:{x:{grid:{display:false},ticks:{color:'#94a3b8',font:{size:10},maxTicksLimit:10}},
+              y:{grid:{color:'#f1f5f9'},ticks:{color:'#94a3b8',font:{size:10},callback:v=>'₹'+(v/1000).toFixed(0)+'k'},border:{display:false}}}}
+  });
+}
+
+// ─────────────────────────────
+//  ADD / DELETE
+// ─────────────────────────────
+function addExpense(){
+  const amount=parseFloat(document.getElementById('f-amount').value);
+  const date=document.getElementById('f-date').value;
+  const vendor=document.getElementById('f-vendor').value.trim();
+  const category=document.getElementById('f-cat').value;
+  const notes=document.getElementById('f-notes').value.trim();
+  if(!amount||amount<=0) return toast('⚠ Enter a valid amount');
+  if(!date) return toast('⚠ Select a date');
+  if(!vendor) return toast('⚠ Enter vendor name');
+  if(!category) return toast('⚠ Select a category');
+  expenses.unshift({id:Date.now(),amount,date,vendor,category,notes});
+  save(); clearForm(); renderAll();
+  toast('✓ Expense Agent processed this transaction!');
+}
+
+function clearForm(){
+  ['f-amount','f-vendor','f-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-cat').value='';
+  document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
+}
+
+function deleteExpense(id){
+  if(!confirm('Delete this transaction?')) return;
+  expenses=expenses.filter(e=>e.id!==id);
+  save(); renderAll(); toast('Transaction deleted');
+}
+
+// ─────────────────────────────
+//  INIT
+// ─────────────────────────────
+document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
+renderAll();
+renderTotalBudgetHint();
+if(firstTime) showWelcome();
+</script>
+</body>
+</html>
